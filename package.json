@@ -16,7 +16,7 @@
     "express": "^5.2.1",
     "firebase-admin": "^13.8.0",
     "jsonwebtoken": "^9.0.3",
-    "mongodb": "^7.1.1",
-    "vercel": "^51.5.0"
+    "mongodb": "^7.1.1"
+    
   }
 }
