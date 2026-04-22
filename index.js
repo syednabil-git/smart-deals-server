@@ -86,6 +86,9 @@ async function run() {
 
                 
             })
+            app.get('/', (req, res) => {
+             res.send('Server is running 🚀');
+                });
 
             app.get('/my-products', verifyFireBaseToken, async (req, res) => {
 
