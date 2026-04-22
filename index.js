@@ -87,19 +87,19 @@ async function run() {
                 
             })
 
-            app.get ('/products', async(req, res) => {
+            app.get('/my-products', verifyFireBaseToken, async (req, res) => {
 
-                console.log(req.query);
-                 const email = req.query.email;
-                 const query = {}
-                 if(email) {
-                    query.email = email;
-                 }
-                const cursor = productsCollection.find(query);
-                const result = await cursor.toArray();
-                
-                res.send(result)
-            });
+                const email = req.token_email;
+
+                const query = { email: email };
+
+                const result = await productsCollection.find(query).toArray();
+                res.send(result);
+            })
+            // app.get('/all-products', async (req, res) => {
+            //     const result = await productsCollection.find().toArray();
+            //     res.send(result);
+            // });
 
             app.get('/latest-products', async(req, res) =>{
                 const cursor = productsCollection.find().sort({create_at: -1}).limit(6);
@@ -114,7 +114,22 @@ async function run() {
                 }
                 const result = await productsCollection.findOne(query);
                 res.send(result);
-            });    
+            }); 
+            app.get('/all-products', async(req, res) => {
+                const search = req.query.search;
+
+                let query = {};
+                if (search) {
+                    query = {
+                        $or: [
+                            {title: { $regex: search, $options: "i"} },
+                            { category: { $regex: search, $options: "i"} }
+                        ]
+                    };
+                }
+                const result = await productsCollection.find(query).toArray();
+                res.send(result);
+            });   
 
             app.post('/products', verifyFireBaseToken, async(req, res) => {
                 console.log('headers in the post', req.headers)
@@ -129,12 +144,12 @@ async function run() {
                 const query = { _id: new ObjectId(id)}
                 const update = {
                     $set: {
-                        name: updatedProduct.name,
-                        price: updatedProduct.price
+                        ...updatedProduct
                     }
                 }
 
                 const result = await productsCollection.updateOne(query, update)
+                console.log(result);
                 res.send(result)
             });
 
@@ -173,6 +188,14 @@ async function run() {
             
             app.post('/bids', async(req, res) =>{
                 const newBid = req.body;
+
+                const product = await productsCollection.findOne({
+                    _id: new ObjectId(newBid.product)
+                });
+                newBid.product_title = product?.title;
+                newBid.product_image = product?.image;
+                newBid.product_price_min = product?.price_min;
+
                 const result= await bidsCollection.insertOne(newBid);
                 res.send(result)
             })
